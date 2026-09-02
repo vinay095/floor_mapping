@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react';
+import { SearchOutlined, FilterOutlined, DownOutlined, EditOutlined, SettingOutlined, PlusOutlined, MinusOutlined, UserOutlined, TeamOutlined, MenuOutlined, CloseOutlined } from '@ant-design/icons';
 import FloorPlanStage from '../components/floor/FloorPlanStage';
 import Toolbar from '../components/ui/Toolbar';
-import Legend from '../components/ui/Legend';
 import matrixData from '../assets/floor6matrix.json';
 import { mockEmployees } from '../data/mockEmployees';
 import { mockTeams } from '../data/mockTeams';
@@ -19,6 +19,7 @@ const FloorPlanPage: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [zoom, setZoom] = useState(1);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Measure container
   useEffect(() => {
@@ -34,12 +35,12 @@ const FloorPlanPage: React.FC = () => {
     const ro = new ResizeObserver(measure);
     if (containerRef.current) ro.observe(containerRef.current);
     return () => ro.disconnect();
-  }, []);
+  }, [sidebarOpen]);
 
-  // Compute seat metadata (row-col → { seatCode })
+  // Compute seat metadata
   const seatMetadata = useMemo(() => generateReadableSeatMetadata(layout), []);
 
-  // Build seatCode → Employee map from assignments
+  // Build assignments
   const assignedEmployees = useMemo<Record<string, Employee>>(() => {
     const employeeById = Object.fromEntries(mockEmployees.map(e => [e.id, e]));
     const result: Record<string, Employee> = {};
@@ -51,17 +52,6 @@ const FloorPlanPage: React.FC = () => {
     return result;
   }, []);
 
-  // Stats
-  const totalSeats = useMemo(() => extractSeatPositions(layout).length, []);
-  const occupiedSeats = Object.keys(assignedEmployees).length;
-
-  // Zoom controls — communicate down to stage via callback refs
-  const stageZoomRef = useRef<{
-    zoomIn: () => void;
-    zoomOut: () => void;
-    reset: () => void;
-  } | null>(null);
-
   const floorWidth = layout.columns * CELL_SIZE;
   const floorHeight = layout.rows * CELL_SIZE;
 
@@ -72,88 +62,135 @@ const FloorPlanPage: React.FC = () => {
     return Math.min(sx, sy, 1);
   }, [dimensions, floorWidth, floorHeight]);
 
-  // We'll pass zoom state up from FloorPlanStage via prop drilling
-  // For now use local zoom state synced via callback
-  const handleZoomChange = useCallback((z: number) => setZoom(z), []);
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#060D1A', fontFamily: 'Inter, sans-serif' }}>
-      {/* Header */}
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--color-bg-deep)' }}>
+      {/* Top Navbar */}
       <header style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 24px',
-        height: 56,
-        borderBottom: '1px solid #1E293B',
-        background: 'rgba(9, 18, 35, 0.95)',
-        backdropFilter: 'blur(10px)',
-        flexShrink: 0,
-        zIndex: 10,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0 16px', height: 48, background: 'var(--color-nav-bg)', color: '#fff',
+        flexShrink: 0, zIndex: 10
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {/* Logo mark */}
-          <div style={{
-            width: 32, height: 32,
-            background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)',
-            borderRadius: 8,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 16,
-          }}>🏢</div>
-          <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#F1F5F9', letterSpacing: '-0.02em' }}>
-              Office Floor Map
-            </div>
-            <div style={{ fontSize: 11, color: '#475569' }}>Floor 6 · Live View</div>
-          </div>
-        </div>
-
-        {/* Stats pills */}
-        <div style={{ display: 'flex', gap: 8 }}>
-          <Pill label="Seats" value={totalSeats} color="#3B82F6" />
-          <Pill label="Occupied" value={occupiedSeats} color="#10B981" />
-          <Pill label="Free" value={totalSeats - occupiedSeats} color="#F59E0B" />
-        </div>
-
-        {/* Admin badge */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          padding: '4px 12px',
-          background: 'rgba(59, 130, 246, 0.1)',
-          border: '1px solid rgba(59, 130, 246, 0.3)',
-          borderRadius: 20,
-        }}>
-          <div style={{ width: 8, height: 8, borderRadius: 4, background: '#3B82F6', boxShadow: '0 0 6px #3B82F6' }} />
-          <span style={{ fontSize: 12, color: '#93C5FD', fontWeight: 500 }}>Admin</span>
+        <div style={{ fontSize: 16, fontWeight: 500 }}>New draft</div>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <button style={{ background: '#fff', color: '#373A40', border: 'none', padding: '6px 16px', borderRadius: 4, fontWeight: 500, cursor: 'pointer' }}>
+            Save draft
+          </button>
+          <button style={{ background: '#F87171', color: '#fff', border: 'none', padding: '6px 16px', borderRadius: 4, fontWeight: 500, cursor: 'pointer' }}>
+            Publish
+          </button>
+          <button style={{ background: '#fff', color: '#373A40', border: 'none', width: 28, height: 28, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+            <CloseOutlined style={{ fontSize: 14 }} />
+          </button>
         </div>
       </header>
 
-      {/* Main area */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
-        {/* Canvas container */}
-        <div
-          ref={containerRef}
-          style={{ flex: 1, position: 'relative', overflow: 'hidden' }}
-        >
-          {dimensions.width > 0 && (
-            <FloorPlanStage
-              layout={layout}
-              seatMetadata={seatMetadata}
-              assignedEmployees={assignedEmployees}
-              areas={mockAreas}
-              containerWidth={dimensions.width}
-              containerHeight={dimensions.height}
-            />
-          )}
+      {/* Main Body */}
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        
+        {/* Left Narrow Nav Sidebar */}
+        <div style={{
+          width: 72, background: 'var(--color-bg-surface)', borderRight: '1px solid var(--color-border)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 16, gap: 24, zIndex: 5
+        }}>
+          <NavIcon icon={<MenuOutlined />} label="Map overview" />
+          <NavIcon icon={<TeamOutlined />} label="Manage seating" active />
+          <NavIcon icon={<PlusOutlined />} label="Add resources" />
+        </div>
 
-          {/* Floating toolbar */}
+        {/* Secondary Seating Sidebar */}
+        {sidebarOpen && (
           <div style={{
-            position: 'absolute',
-            bottom: 20,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 5,
+            width: 320, background: 'var(--color-bg-surface)', borderRight: '1px solid var(--color-border)',
+            display: 'flex', flexDirection: 'column', zIndex: 4
           }}>
+            <div style={{ padding: '16px', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontWeight: 600, fontSize: 15 }}>Seating</span>
+              <CloseOutlined style={{ cursor: 'pointer', color: 'var(--color-text-muted)' }} onClick={() => setSidebarOpen(false)} />
+            </div>
+            
+            <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {/* Search */}
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px',
+                border: '1px solid var(--color-border)', borderRadius: 20, background: '#F9FAFB'
+              }}>
+                <SearchOutlined style={{ color: 'var(--color-text-muted)' }} />
+                <input 
+                  type="text" placeholder="Search employees" 
+                  style={{ border: 'none', background: 'transparent', outline: 'none', flex: 1, fontSize: 13 }} 
+                />
+              </div>
+
+              {/* Insights Filter */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <button style={{
+                  display: 'flex', alignItems: 'center', gap: 6, background: '#4F46E5', color: '#fff',
+                  border: 'none', padding: '6px 12px', borderRadius: 4, fontSize: 12, fontWeight: 500, cursor: 'pointer'
+                }}>
+                  ✨ Insights (5)
+                </button>
+                <FilterOutlined style={{ color: 'var(--color-text-secondary)', cursor: 'pointer' }} />
+              </div>
+            </div>
+
+            {/* Accordion Lists (Mock) */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px' }}>
+              <SidebarAccordion title="Unassigned" count={3} defaultOpen>
+                <div style={{ padding: '12px', background: '#F8FAFC', borderRadius: 6, fontSize: 11, color: 'var(--color-text-secondary)', marginBottom: 12, display: 'flex', gap: 8 }}>
+                   <div style={{color: '#4F46E5'}}>✨</div>
+                   3 employees come in above the required attendance in the last 90 days.
+                </div>
+                <TeamGroup name="Marketing" employees={mockEmployees.slice(0, 2)} />
+                <TeamGroup name="Sales" employees={mockEmployees.slice(2, 3)} />
+              </SidebarAccordion>
+              
+              <SidebarAccordion title="Assigned" count={12}>
+                 <TeamGroup name="Engineering" employees={mockEmployees.slice(3, 8)} />
+              </SidebarAccordion>
+            </div>
+          </div>
+        )}
+
+        {/* Main Canvas Area */}
+        <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', background: 'var(--color-bg-deep)' }}>
+          
+          {/* Top Overlays */}
+          <div style={{ position: 'absolute', top: 20, left: 20, right: 20, display: 'flex', justifyContent: 'space-between', zIndex: 2 }}>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {!sidebarOpen && (
+                <button onClick={() => setSidebarOpen(true)} style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 4, padding: '6px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <MenuOutlined /> Seating
+                </button>
+              )}
+              <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 4, padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
+                Floor 4 <DownOutlined style={{ fontSize: 10, color: 'var(--color-text-muted)' }} />
+              </div>
+              <button style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 4, width: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <EditOutlined style={{ color: 'var(--color-text-secondary)' }} />
+              </button>
+            </div>
+            
+            <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 4, padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
+              Neighborhood <DownOutlined style={{ fontSize: 10, color: 'var(--color-text-muted)' }} />
+            </div>
+          </div>
+
+          {/* Konva Canvas */}
+          <div ref={containerRef} style={{ flex: 1, overflow: 'hidden' }}>
+            {dimensions.width > 0 && (
+              <FloorPlanStage
+                layout={layout}
+                seatMetadata={seatMetadata}
+                assignedEmployees={assignedEmployees}
+                areas={mockAreas}
+                containerWidth={dimensions.width}
+                containerHeight={dimensions.height}
+              />
+            )}
+          </div>
+
+          {/* Bottom Overlays */}
+          <div style={{ position: 'absolute', bottom: 20, right: 20, display: 'flex', flexDirection: 'column', gap: 8, zIndex: 2 }}>
             <Toolbar
               currentZoom={zoom}
               onZoomIn={() => setZoom(z => Math.min(ZOOM_MAX, +(z + ZOOM_STEP).toFixed(2)))}
@@ -162,120 +199,62 @@ const FloorPlanPage: React.FC = () => {
             />
           </div>
 
-          {/* Help hint */}
-          <div style={{
-            position: 'absolute',
-            bottom: 20,
-            right: 20,
-            fontSize: 11,
-            color: '#334155',
-            textAlign: 'right',
-            lineHeight: 1.8,
-          }}>
-            <div>🖱 Scroll to zoom</div>
-            <div>✋ Drag to pan</div>
-            <div>👆 Hover seat for details</div>
+          <div style={{ position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 12, zIndex: 2 }}>
+             <BottomBtn text="Deactivate everything on this floor" />
+             <BottomBtn text="Activate everything on this floor" />
+             <BottomBtn text="Delete everything on this floor" />
           </div>
-        </div>
 
-        {/* Right panel: legend */}
-        <div style={{
-          width: 200,
-          padding: 16,
-          borderLeft: '1px solid #1E293B',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 12,
-          overflowY: 'auto',
-          background: 'rgba(9, 18, 35, 0.7)',
-        }}>
-          <Legend
-            teams={mockTeams}
-            totalSeats={totalSeats}
-            occupiedSeats={occupiedSeats}
-          />
-
-          {/* Employee list */}
-          <div style={{
-            background: 'rgba(15, 23, 42, 0.9)',
-            border: '1px solid #1E293B',
-            borderRadius: 10,
-            padding: '12px',
-            flex: 1,
-          }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#64748B', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
-              Employees
-            </div>
-            {mockEmployees.map(emp => (
-              <EmployeeRow key={emp.id} employee={emp} />
-            ))}
-          </div>
         </div>
       </div>
     </div>
   );
 };
 
-const Pill: React.FC<{ label: string; value: number; color: string }> = ({ label, value, color }) => (
-  <div style={{
-    display: 'flex',
-    alignItems: 'center',
-    gap: 6,
-    padding: '3px 10px',
-    background: `${color}15`,
-    border: `1px solid ${color}40`,
-    borderRadius: 20,
-  }}>
-    <span style={{ fontSize: 13, fontWeight: 700, color }}>{value}</span>
-    <span style={{ fontSize: 11, color: '#64748B' }}>{label}</span>
+// Sub-components for Sidebar
+const NavIcon = ({ icon, label, active = false }: { icon: React.ReactNode; label: string; active?: boolean }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer', color: active ? 'var(--color-accent-red)' : 'var(--color-text-secondary)' }}>
+    <div style={{ fontSize: 18 }}>{icon}</div>
+    <div style={{ fontSize: 10, textAlign: 'center', maxWidth: 60, lineHeight: 1.2 }}>{label}</div>
   </div>
 );
 
-const EmployeeRow: React.FC<{ employee: Employee }> = ({ employee }) => {
-  const teamColors: Record<string, string> = {
-    Engineering: '#3B82F6',
-    Product: '#10B981',
-    Design: '#8B5CF6',
-    'Data & Analytics': '#F59E0B',
-    DevOps: '#EF4444',
-    QA: '#06B6D4',
-  };
-  const color = teamColors[employee.teamName] ?? '#94A3B8';
-  const initials = employee.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-
+const SidebarAccordion = ({ title, count, defaultOpen = false, children }: any) => {
+  const [open, setOpen] = useState(defaultOpen);
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 8,
-      padding: '6px 0',
-      borderBottom: '1px solid #0F172A',
-    }}>
-      <div style={{
-        width: 26,
-        height: 26,
-        borderRadius: 13,
-        background: `hsl(${(employee.id * 47) % 360}, 70%, 45%)`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: 10,
-        fontWeight: 700,
-        color: '#fff',
-        flexShrink: 0,
-      }}>
-        {initials}
-      </div>
-      <div style={{ flex: 1, overflow: 'hidden' }}>
-        <div style={{ fontSize: 11, fontWeight: 600, color: '#CBD5E1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {employee.name}
+    <div style={{ marginBottom: 16 }}>
+      <div onClick={() => setOpen(!open)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', cursor: 'pointer', borderBottom: '1px solid var(--color-border)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600, fontSize: 13, color: 'var(--color-text-primary)' }}>
+          <DownOutlined style={{ fontSize: 10, transform: open ? 'none' : 'rotate(-90deg)', transition: 'transform 0.2s' }} />
+          {title}
         </div>
-        <div style={{ fontSize: 10, color: color, fontWeight: 500 }}>
-          {employee.teamName}
-        </div>
+        <span style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>{count}</span>
       </div>
+      {open && <div style={{ paddingTop: 12 }}>{children}</div>}
     </div>
   );
 };
+
+const TeamGroup = ({ name, employees }: { name: string; employees: Employee[] }) => (
+  <div style={{ marginBottom: 12 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--color-text-secondary)', marginBottom: 8 }}>
+       <DownOutlined style={{ fontSize: 8 }} /> {name}
+    </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      {employees.map(e => (
+        <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0 4px 14px', fontSize: 12 }}>
+          <span>{e.name}</span>
+          <span style={{ color: 'var(--color-text-muted)' }}>(1x)</span>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const BottomBtn = ({ text }: { text: string }) => (
+  <button style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '8px 16px', borderRadius: 4, fontSize: 12, color: 'var(--color-text-secondary)', cursor: 'pointer' }}>
+    {text}
+  </button>
+);
 
 export default FloorPlanPage;

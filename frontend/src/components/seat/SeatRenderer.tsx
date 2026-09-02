@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Rect, Text, Group } from 'react-konva';
+import { Circle, Text, Group, Path } from 'react-konva';
 import { CELL_SIZE } from '../../constants/layout';
 import type { Employee } from '../../types/employee.types';
 import type { SeatMetadata } from '../../types/seat.types';
@@ -20,22 +20,7 @@ interface SeatRendererProps {
   onTooltipHide: () => void;
 }
 
-const SEAT_PADDING = 3;
-const SEAT_SIZE = CELL_SIZE - SEAT_PADDING * 2;
-const CORNER_RADIUS = 6;
-
-// Color palette
-const COLORS = {
-  emptyFill: '#1E293B',
-  emptyStroke: '#334155',
-  occupiedFill: '#1D4ED8',
-  occupiedStroke: '#3B82F6',
-  occupiedGlow: '#60A5FA',
-  codeText: '#94A3B8',
-  nameText: '#F0F9FF',
-  hoverEmpty: '#2D3F55',
-  hoverOccupied: '#2563EB',
-};
+const SEAT_RADIUS = CELL_SIZE / 2 - 4; // Add a little padding
 
 const SeatRenderer: React.FC<SeatRendererProps> = ({
   row,
@@ -47,15 +32,10 @@ const SeatRenderer: React.FC<SeatRendererProps> = ({
 }) => {
   const [hovered, setHovered] = useState(false);
 
-  const x = col * CELL_SIZE + SEAT_PADDING;
-  const y = row * CELL_SIZE + SEAT_PADDING;
+  // Center coordinates of the cell
+  const cx = col * CELL_SIZE + CELL_SIZE / 2;
+  const cy = row * CELL_SIZE + CELL_SIZE / 2;
   const isOccupied = !!employee;
-
-  const fill = isOccupied
-    ? hovered ? COLORS.hoverOccupied : COLORS.occupiedFill
-    : hovered ? COLORS.hoverEmpty : COLORS.emptyFill;
-
-  const stroke = isOccupied ? COLORS.occupiedStroke : COLORS.emptyStroke;
 
   const handleMouseEnter = (e: any) => {
     setHovered(true);
@@ -71,7 +51,6 @@ const SeatRenderer: React.FC<SeatRendererProps> = ({
         });
       }
     }
-    // Change cursor
     const container = stage?.container();
     if (container) container.style.cursor = 'pointer';
   };
@@ -83,93 +62,58 @@ const SeatRenderer: React.FC<SeatRendererProps> = ({
     if (container) container.style.cursor = 'default';
   };
 
-  // Get employee initials for avatar
   const getInitials = (name: string) =>
     name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
+  // Colors based on the mockup
+  const avatarBg = employee ? `hsl(${(employee.id * 47) % 360}, 70%, 45%)` : '#fff';
+  
   return (
     <Group
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Seat background */}
-      <Rect
-        x={x}
-        y={y}
-        width={SEAT_SIZE}
-        height={SEAT_SIZE}
-        fill={fill}
-        stroke={stroke}
-        strokeWidth={isOccupied ? 1.5 : 1}
-        cornerRadius={CORNER_RADIUS}
-        shadowColor={isOccupied ? COLORS.occupiedGlow : undefined}
-        shadowBlur={isOccupied && hovered ? 10 : 0}
-        shadowOpacity={0.5}
-      />
-
-      {/* Seat code — top left */}
-      <Text
-        x={x + 4}
-        y={y + 4}
-        text={metadata.seatCode}
-        fontSize={9}
-        fontFamily="Inter, sans-serif"
-        fill={COLORS.codeText}
-        fontStyle="600"
+      {/* Main Seat Circle */}
+      <Circle
+        x={cx}
+        y={cy}
+        radius={SEAT_RADIUS}
+        fill={isOccupied ? avatarBg : '#FFFFFF'}
+        stroke={isOccupied ? (hovered ? '#2563EB' : '#E5E7EB') : '#22C55E'}
+        strokeWidth={isOccupied && hovered ? 2 : 1.5}
+        shadowColor={hovered ? 'rgba(0,0,0,0.15)' : 'transparent'}
+        shadowBlur={6}
+        shadowOffset={{ x: 0, y: 2 }}
       />
 
       {isOccupied && employee ? (
-        <>
-          {/* Avatar circle */}
-          <Rect
-            x={x + SEAT_SIZE / 2 - 12}
-            y={y + 14}
-            width={24}
-            height={24}
-            fill={`hsl(${(employee.id * 47) % 360}, 70%, 55%)`}
-            cornerRadius={12}
-          />
-          {/* Initials */}
-          <Text
-            x={x + SEAT_SIZE / 2 - 12}
-            y={y + 20}
-            width={24}
-            text={getInitials(employee.name)}
-            fontSize={9}
-            fontFamily="Inter, sans-serif"
-            fill="#ffffff"
-            fontStyle="bold"
-            align="center"
-          />
-          {/* Employee first name */}
-          <Text
-            x={x + 2}
-            y={y + SEAT_SIZE - 16}
-            width={SEAT_SIZE - 4}
-            text={employee.name.split(' ')[0]}
-            fontSize={9}
-            fontFamily="Inter, sans-serif"
-            fill={COLORS.nameText}
-            align="center"
-            ellipsis
-          />
-        </>
-      ) : (
-        // Empty label
+        // Initials for occupied seat
         <Text
-          x={x}
-          y={y + SEAT_SIZE / 2 - 6}
-          width={SEAT_SIZE}
-          text="Empty"
-          fontSize={9}
+          x={cx - SEAT_RADIUS}
+          y={cy - 5}
+          width={SEAT_RADIUS * 2}
+          text={getInitials(employee.name)}
+          fontSize={10}
           fontFamily="Inter, sans-serif"
-          fill="#475569"
+          fill="#FFFFFF"
+          fontStyle="bold"
           align="center"
         />
+      ) : (
+        // Desk Icon for empty seat (drawn using a simple Path)
+        // A little desk shape in green
+        <Group x={cx - 7} y={cy - 6}>
+          <Path
+            data="M2,2 L12,2 L12,4 L2,4 Z M3,4 L3,10 M11,4 L11,10 M1,6 L13,6"
+            stroke="#22C55E"
+            strokeWidth={1.5}
+            lineCap="round"
+            lineJoin="round"
+          />
+        </Group>
       )}
     </Group>
   );
 };
 
-export type { TooltipInfo };
 export default SeatRenderer;

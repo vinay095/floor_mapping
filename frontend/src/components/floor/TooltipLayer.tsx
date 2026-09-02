@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layer, Rect, Text, Group, Arrow } from 'react-konva';
+import { Layer, Rect, Text, Group } from 'react-konva';
 import type { Employee } from '../../types/employee.types';
 
 interface TooltipLayerProps {
@@ -47,68 +47,68 @@ const TooltipLayer: React.FC<TooltipLayerProps> = ({
       <Group x={tx} y={ty}>
         {/* Shadow */}
         <Rect
-          x={3}
-          y={3}
+          x={2}
+          y={4}
           width={TOOLTIP_WIDTH}
           height={TOOLTIP_HEIGHT}
-          fill="rgba(0,0,0,0.4)"
-          cornerRadius={10}
-          blur={8}
+          fill="rgba(0,0,0,0.15)"
+          cornerRadius={8}
+          blur={10}
         />
         {/* Background */}
         <Rect
           width={TOOLTIP_WIDTH}
           height={TOOLTIP_HEIGHT}
-          fill="#0F172A"
-          stroke="#334155"
+          fill="#FFFFFF"
+          stroke="#E5E7EB"
           strokeWidth={1}
-          cornerRadius={10}
+          cornerRadius={8}
         />
         {/* Top accent bar */}
         <Rect
           width={TOOLTIP_WIDTH}
           height={4}
           fill={teamColor}
-          cornerRadius={[10, 10, 0, 0]}
+          cornerRadius={[8, 8, 0, 0]}
         />
 
         {/* Employee name */}
         <Text
           x={TOOLTIP_PADDING}
-          y={12}
+          y={14}
           width={TOOLTIP_WIDTH - TOOLTIP_PADDING * 2}
           text={employee.name}
           fontSize={13}
           fontStyle="bold"
           fontFamily="Inter, sans-serif"
-          fill="#F1F5F9"
+          fill="#1F2937"
         />
 
         {/* Designation */}
         <Text
           x={TOOLTIP_PADDING}
-          y={30}
+          y={32}
           width={TOOLTIP_WIDTH - TOOLTIP_PADDING * 2}
           text={employee.designation}
           fontSize={11}
           fontFamily="Inter, sans-serif"
-          fill="#94A3B8"
+          fill="#6B7280"
         />
 
         {/* Team badge */}
         <Rect
           x={TOOLTIP_PADDING}
-          y={50}
+          y={52}
           width={employee.teamName.length * 6.5 + 12}
           height={18}
-          fill={`${teamColor}22`}
+          fill={`${teamColor}15`}
           stroke={teamColor}
           strokeWidth={1}
           cornerRadius={4}
         />
         <Text
           x={TOOLTIP_PADDING + 6}
-          y={54}
+          y={56}
           text={employee.teamName}
           fontSize={10}
           fontFamily="Inter, sans-serif"
@@ -123,7 +123,7 @@ const TooltipLayer: React.FC<TooltipLayerProps> = ({
           text={`📍 Seat: ${seatCode ?? '—'}`}
           fontSize={11}
           fontFamily="Inter, sans-serif"
-          fill="#64748B"
+          fill="#4B5563"
         />
 
         {/* Email */}
@@ -134,7 +134,7 @@ const TooltipLayer: React.FC<TooltipLayerProps> = ({
           text={employee.email}
           fontSize={10}
           fontFamily="Inter, sans-serif"
-          fill="#475569"
+          fill="#9CA3AF"
           ellipsis
         />
       </Group>

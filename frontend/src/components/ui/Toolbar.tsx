@@ -1,4 +1,5 @@
 import React from 'react';
+import { SettingOutlined, PlusOutlined, MinusOutlined } from '@ant-design/icons';
 
 interface ToolbarProps {
   onZoomIn: () => void;
@@ -11,21 +12,25 @@ const Toolbar: React.FC<ToolbarProps> = ({ onZoomIn, onZoomOut, onReset, current
   return (
     <div style={{
       display: 'flex',
-      alignItems: 'center',
-      gap: 6,
-      background: 'rgba(15, 23, 42, 0.9)',
-      border: '1px solid #1E293B',
-      borderRadius: 10,
-      padding: '6px 10px',
-      backdropFilter: 'blur(10px)',
+      flexDirection: 'column',
+      background: '#FFFFFF',
+      border: '1px solid var(--color-border)',
+      borderRadius: 8,
+      overflow: 'hidden',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+      width: 36
     }}>
-      <ToolBtn onClick={onZoomIn} title="Zoom in">＋</ToolBtn>
-      <span style={{ fontSize: 12, color: '#64748B', minWidth: 40, textAlign: 'center' }}>
-        {Math.round(currentZoom * 100)}%
-      </span>
-      <ToolBtn onClick={onZoomOut} title="Zoom out">－</ToolBtn>
-      <div style={{ width: 1, height: 20, background: '#1E293B', margin: '0 4px' }} />
-      <ToolBtn onClick={onReset} title="Reset view">⊙</ToolBtn>
+      <ToolBtn onClick={onReset} title="Settings/Reset">
+        <SettingOutlined />
+      </ToolBtn>
+      <div style={{ height: 1, background: 'var(--color-border)', width: '100%' }} />
+      <ToolBtn onClick={onZoomIn} title="Zoom in">
+        <PlusOutlined />
+      </ToolBtn>
+      <div style={{ height: 1, background: 'var(--color-border)', width: '100%' }} />
+      <ToolBtn onClick={onZoomOut} title="Zoom out">
+        <MinusOutlined />
+      </ToolBtn>
     </div>
   );
 };
@@ -38,25 +43,22 @@ const ToolBtn: React.FC<{ onClick: () => void; title: string; children: React.Re
     title={title}
     style={{
       background: 'transparent',
-      border: '1px solid #1E293B',
-      borderRadius: 6,
-      color: '#94A3B8',
-      width: 30,
-      height: 30,
+      border: 'none',
+      color: 'var(--color-text-secondary)',
+      width: 36,
+      height: 36,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      fontSize: 16,
+      fontSize: 14,
       cursor: 'pointer',
       transition: 'all 0.15s',
     }}
     onMouseEnter={e => {
-      (e.currentTarget as HTMLButtonElement).style.background = '#1E293B';
-      (e.currentTarget as HTMLButtonElement).style.color = '#F1F5F9';
+      (e.currentTarget as HTMLButtonElement).style.background = '#F9FAFB';
     }}
     onMouseLeave={e => {
       (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
-      (e.currentTarget as HTMLButtonElement).style.color = '#94A3B8';
     }}
   >
     {children}

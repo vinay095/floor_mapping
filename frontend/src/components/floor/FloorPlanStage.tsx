@@ -115,7 +115,7 @@ const FloorPlanStage: React.FC<FloorPlanStageProps> = ({
           y={0}
           width={floorWidth}
           height={floorHeight}
-          fill="#0B1120"
+          fill="transparent"
           cornerRadius={8}
         />
         {/* Grid lines - subtle */}
@@ -125,8 +125,8 @@ const FloorPlanStage: React.FC<FloorPlanStageProps> = ({
             x={0}
             y={i * CELL_SIZE}
             width={floorWidth}
-            height={0.5}
-            fill="#1E293B"
+            height={1}
+            fill="#F3F4F6"
           />
         ))}
         {Array.from({ length: layout.columns + 1 }).map((_, i) => (
@@ -134,9 +134,9 @@ const FloorPlanStage: React.FC<FloorPlanStageProps> = ({
             key={`vline-${i}`}
             x={i * CELL_SIZE}
             y={0}
-            width={0.5}
+            width={1}
             height={floorHeight}
-            fill="#1E293B"
+            fill="#F3F4F6"
           />
         ))}
       </Layer>
