@@ -3,7 +3,7 @@ import { CellType } from '../constants/cellTypes';
 export interface MatrixLayout {
   rows: number;
   columns: number;
-  matrix: number[][];
+  matrix: string[][];
 }
 
 export interface GridPosition {

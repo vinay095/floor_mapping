@@ -7,6 +7,7 @@ import type { SeatMetadataMap } from '../../types/seat.types';
 import type { Employee } from '../../types/employee.types';
 import type { Area } from '../../types/area.types';
 import AreaLayer from './AreaLayer';
+import ObjectLayer from './ObjectLayer';
 import SeatLayer from './SeatLayer';
 import TooltipLayer from './TooltipLayer';
 import { type TooltipInfo } from '../seat/SeatRenderer';
@@ -91,7 +92,7 @@ const FloorPlanStage: React.FC<FloorPlanStageProps> = ({
   }, []);
 
   const handleTooltipHide = useCallback(() => {
-    setTooltip(prev => ({ ...prev, visible: false }));
+    setTooltip((prev: any) => ({ ...prev, visible: false }));
   }, []);
 
   return (
@@ -143,6 +144,9 @@ const FloorPlanStage: React.FC<FloorPlanStageProps> = ({
 
       {/* Team area backgrounds */}
       <AreaLayer areas={areas} />
+
+      {/* Static objects (rooms, washrooms, etc) */}
+      <ObjectLayer layout={layout} />
 
       {/* Seats */}
       <SeatLayer

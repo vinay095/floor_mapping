@@ -4,7 +4,7 @@ import { CELL_SIZE } from '../../constants/layout';
 import type { Employee } from '../../types/employee.types';
 import type { SeatMetadata } from '../../types/seat.types';
 
-interface TooltipInfo {
+export interface TooltipInfo {
   x: number;
   y: number;
   employee: Employee;
